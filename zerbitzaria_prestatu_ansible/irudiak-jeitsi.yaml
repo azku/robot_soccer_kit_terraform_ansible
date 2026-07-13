@@ -1,0 +1,74 @@
+---
+- name: Download Xubuntu ISO to Proxmox hosts
+  hosts: proxmox
+  become: true
+
+  vars:
+    iso_url: "http://ftp.free.fr/mirrors/ftp.xubuntu.com/releases/26.04/release/xubuntu-26.04-desktop-amd64.iso"
+    iso_name: "xubuntu-26.04-desktop-amd64.iso"
+    iso_dir: "/var/lib/vz/template/iso"
+    template_name: ubuntu-24.04-standard_24.04-2_amd64.tar.zst
+    template_storage: local
+
+  tasks:
+    - name: Ensure ISO directory exists
+      ansible.builtin.file:
+        path: "{{ iso_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Download ISO
+      ansible.builtin.get_url:
+        url: "{{ iso_url }}"
+        dest: "{{ iso_dir }}/{{ iso_name }}"
+        mode: "0644"
+        timeout: 600
+        force: false
+    - name: Update Proxmox template list
+      command: pveam update
+
+    - name: Download Ubuntu 24.04 LXC template
+      command: >
+        pveam download {{ template_storage }} {{ template_name }}
+      args:
+        creates: "/var/lib/vz/template/cache/{{ template_name }}"
+    - name: Configure PVE No-Subscription Repository (DEB822 format)
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/pve-enterprise.sources
+        content: |
+          Types: deb
+          URIs: http://download.proxmox.com/debian/pve
+          Suites: trixie
+          Components: pve-no-subscription
+          Signed-By: /usr/share/keyrings/proxmox-archive-keyring.gpg
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Configure Ceph No-Subscription Repository (DEB822 format)
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/ceph.sources
+        content: |
+          Types: deb
+          URIs: http://download.proxmox.com/debian/ceph-tentacle
+          Suites: trixie
+          Components: no-subscription
+          Signed-By: /usr/share/keyrings/proxmox-archive-keyring.gpg
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Update apt cache after repository modification
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Install dnsmasq for SDN DHCP support
+      ansible.builtin.apt:
+        name: dnsmasq
+        state: present
+
+    - name: Disable standalone dnsmasq system daemon
+      ansible.builtin.systemd_service:
+        name: dnsmasq
+        state: stopped
+        enabled: false

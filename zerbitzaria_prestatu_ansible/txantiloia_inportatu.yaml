@@ -1,0 +1,34 @@
+---
+- name: Import Proxmox VM backup and create template
+  hosts: proxmox
+  become: true
+
+  vars:
+    backup_file: "vzdump-qemu-102-2026_07_10-12_58_47.vma.zst"
+    backup_src: "/home/asier/Documents/terraform/proxmox_robot_soccer_kit_ingurunea/{{ backup_file }}"
+    backup_dest: "/var/lib/vz/dump/{{ backup_file }}"
+
+    template_id: 9000
+    storage: "local-lvm"
+
+  tasks:
+
+    - name: Copy VM backup to Proxmox node
+      copy:
+        src: "{{ backup_src }}"
+        dest: "{{ backup_dest }}"
+        owner: root
+        group: root
+        mode: "0600"
+
+    - name: Restore VM from backup
+      command: >
+        qmrestore
+        {{ backup_dest }}
+        {{ template_id }}
+        --storage {{ storage }}
+      args:
+        creates: "/etc/pve/qemu-server/{{ template_id }}.conf"
+
+    # - name: Convert VM to template
+    #   command: qm template {{ template_id }}

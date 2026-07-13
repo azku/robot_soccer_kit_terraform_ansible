@@ -1,0 +1,41 @@
+---
+- name: Install Robot Soccer Kit
+  hosts: containers
+  become: true
+
+  tasks:
+    - name: Install system dependencies
+      apt:
+        name:
+          - python3
+          - python3-pip
+          - python3-venv
+          - libgl1
+          - libglib2.0-0
+          - libsm6
+          - libxext6
+          - libxrender1
+        state: present
+        update_cache: yes
+
+    - name: Create virtual environment
+      command: python3 -m venv /opt/rsk-venv
+      args:
+        creates: /opt/rsk-venv
+
+    - name: Install game controller extras
+      pip:
+        name: "robot-soccer-kit[gc]"
+        virtualenv: /opt/rsk-venv
+        
+    - name: Patch get_video function in RSK backend
+      ansible.builtin.replace:
+        path: /opt/rsk-venv/lib/python3.12/site-packages/rsk/backend.py
+        regexp: 'def get_video\(self, with_image\):\n\s+return self\.video\.get_video\(with_image\)'
+        replace: "def get_video(self, with_image):\n        if not hasattr(self, 'video') or self.video is None:\n            return {'image': None, 'fps': 0, 'markers': []}\n        return self.video.get_video(with_image)"
+
+    - name: Patch enableVideoDebug function in RSK backend
+      ansible.builtin.replace:
+        path: /opt/rsk-venv/lib/python3.12/site-packages/rsk/backend.py
+        regexp: 'def enableVideoDebug\(self, enable\):\n\s+self\.video\.debug = enable'
+        replace: "def enableVideoDebug(self, enable):\n        if hasattr(self, 'video') and self.video is not None:\n            self.video.debug = enable"
