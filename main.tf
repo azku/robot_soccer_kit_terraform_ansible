@@ -100,10 +100,10 @@ resource "proxmox_sdn_applier" "apply" {
 
 resource "proxmox_virtual_environment_container" "my_first_ct" {
   
-  for_each = local.groups
+  for_each = local.flat_containers
   node_name    = var.node_name
   description  = "Managed by Terraform"
-  pool_id   = proxmox_virtual_environment_pool.team_pool[each.key].pool_id
+  pool_id   = proxmox_virtual_environment_pool.team_pool[each.value.team].pool_id
   unprivileged = true
   depends_on = [
     proxmox_sdn_subnet.subnet
@@ -115,12 +115,11 @@ resource "proxmox_virtual_environment_container" "my_first_ct" {
 
   # Define the OS Template (Needs to be pre-downloaded on your Proxmox storage)
   operating_system {
-    #template_file_id = proxmox_download_file.ubuntu_template.id
     template_file_id = "local:vztmpl/ubuntu-24.04-standard_24.04-2_amd64.tar.zst"
     type             = "ubuntu"
   }
   initialization {
-    hostname = "${each.key}-gamecontroller"
+    hostname = "${each.value.team}-${each.value.hostname}"
     user_account {
       password = "txurdi"
       keys = [
@@ -133,7 +132,7 @@ resource "proxmox_virtual_environment_container" "my_first_ct" {
     }
     ip_config {
       ipv4 {
-        address = "${cidrhost(each.value.subnet, 10)}/24"
+        address = "${cidrhost(each.value.subnet, each.value.ip)}/24"
         gateway = cidrhost(each.value.subnet, 1)
       }
     }
@@ -149,7 +148,7 @@ resource "proxmox_virtual_environment_container" "my_first_ct" {
    # Network
   network_interface {
     name   = "eth0"
-    bridge = proxmox_sdn_vnet.vnet[each.key].id
+    bridge = proxmox_sdn_vnet.vnet[each.value.team].id
     firewall = true
   }
 }
@@ -177,40 +176,24 @@ resource "local_file" "ansible_inventory" {
   filename = "${path.module}/inventory.ini"
 
   content = <<EOF
-[containers]
-%{ for team, ip in local.container_ips ~}
-${team} ansible_host=${ip}
+[controllers]
+%{ for _, c in local.flat_containers ~}
+%{ if c.name == "controller" ~}
+${c.team}-${c.name} ansible_host=${cidrhost(c.subnet, 10)}
+%{ endif ~}
 %{ endfor ~}
 
-[containers:vars]
+[postgres]
+%{ for _, c in local.flat_containers ~}
+%{ if c.name == "postgres" ~}
+${c.team}-${c.name} ansible_host=${cidrhost(c.subnet, 20)}
+%{ endif ~}
+%{ endfor ~}
+
+[all:vars]
 ansible_user=root
-ansible_ssh_private_key_file=~/.ssh/hadoop_key
-ansible_ssh_common_args='-o ProxyJump=proxmox'
 EOF
 }
-
-
-# resource "proxmox_download_file" "ubuntu_cloud" {
-#   node_name    = var.node_name
-#   datastore_id = "local"
-
-#   content_type = "iso"
-
-#   url = "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img"
-
-#   file_name = "ubuntu-24.04-cloud.img"
-# }
-# resource "proxmox_virtual_environment_file" "cloudinit_xfce" {
-#   node_name    = var.node_name
-#   datastore_id = "local"
-
-#   content_type = "snippets"
-
-#   source_file {
-#     path = "${path.module}/cloud-init/ubuntu.yaml"
-#   }
-# }
-
 
 resource "proxmox_virtual_environment_vm" "desktop-pc" {
   for_each = local.groups

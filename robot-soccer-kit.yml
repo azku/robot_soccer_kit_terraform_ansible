@@ -1,6 +1,6 @@
 ---
 - name: Install Robot Soccer Kit
-  hosts: containers
+  hosts: controllers
   become: true
 
   tasks:
@@ -39,3 +39,31 @@
         path: /opt/rsk-venv/lib/python3.12/site-packages/rsk/backend.py
         regexp: 'def enableVideoDebug\(self, enable\):\n\s+self\.video\.debug = enable'
         replace: "def enableVideoDebug(self, enable):\n        if hasattr(self, 'video') and self.video is not None:\n            self.video.debug = enable"
+
+
+- name: Configure PostgreSQL servers
+  hosts: postgres
+  become: true
+
+  vars:
+    postgres_packages:
+      - postgresql
+      - postgresql-client
+      - python3-psycopg2
+
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install PostgreSQL
+      ansible.builtin.apt:
+        name: "{{ postgres_packages }}"
+        state: present
+
+    - name: Ensure PostgreSQL is enabled and running
+      ansible.builtin.service:
+        name: postgresql
+        state: started
+        enabled: true        
