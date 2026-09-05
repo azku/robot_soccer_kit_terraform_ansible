@@ -40,6 +40,12 @@ resource "proxmox_virtual_environment_user" "lab_pam_users" {
   comment  = "SSH user for ${each.value.team}"
 
   password = each.value.password
+  groups = [
+    proxmox_virtual_environment_group.team_group[
+      each.value.team
+    ].group_id
+  ]
+
   depends_on = [
     null_resource.pam_users
   ]
@@ -72,15 +78,54 @@ resource "null_resource" "pam_users" {
 resource "proxmox_acl" "pool_access" {
   for_each = local.groups
 
-  # Path points strictly to that team's resource pool
-  path      = "/pool/${proxmox_virtual_environment_pool.team_pool[each.key].pool_id}"
-  
-  # Grant permissions to the team's group
-  group_id  = proxmox_virtual_environment_group.team_group[each.key].group_id
-  
-  # 'PVEVMAdmin' allows them to manage VMs/Containers inside their pool
-  role_id   = "PVEVMAdmin" 
+  path     = "/pool/${proxmox_virtual_environment_pool.team_pool[each.key].pool_id}"
+  group_id = proxmox_virtual_environment_group.team_group[each.key].group_id
+  role_id  = "PVEAdmin"
 }
+
+resource "proxmox_acl" "node_access" {
+  for_each = local.groups
+
+  path     = "/nodes/${var.node_name}"
+  group_id = proxmox_virtual_environment_group.team_group[each.key].group_id
+  role_id  = "PVEAdmin"
+}
+
+resource "proxmox_acl" "local_storage_access" {
+  for_each = local.groups
+
+  path     = "/storage/local"
+  group_id = proxmox_virtual_environment_group.team_group[each.key].group_id
+  role_id  = "PVEAdmin"
+}
+
+resource "proxmox_acl" "local_lvm_access" {
+  for_each = local.groups
+
+  path     = "/storage/local-lvm"
+  group_id = proxmox_virtual_environment_group.team_group[each.key].group_id
+  role_id  = "PVEAdmin"
+}
+
+resource "proxmox_acl" "desktop_template_access" {
+  for_each = local.groups
+
+  path = "/vms/9000"
+
+  group_id = proxmox_virtual_environment_group.team_group[each.key].group_id
+
+  role_id = "PVEAdmin"
+}
+resource "proxmox_acl" "team_vnet_access" {
+  for_each = local.groups
+
+  path = "/sdn/zones/${var.simple_zone_name}/${proxmox_sdn_vnet.vnet[each.key].id}"
+
+  group_id = proxmox_virtual_environment_group.team_group[each.key].group_id
+
+  role_id = "PVESDNUser"
+}
+
 #############################################
 # SDN SIMPLE ZONE (base for all networks)
 #############################################
