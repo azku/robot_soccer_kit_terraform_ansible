@@ -32,6 +32,39 @@ resource "proxmox_virtual_environment_user" "lab_users" {
   # Automatically assign the user to their team's group
   groups   = [proxmox_virtual_environment_group.team_group[each.value.team].group_id]
 }
+resource "proxmox_virtual_environment_user" "lab_pam_users" {
+  for_each = local.flat_users
+
+  user_id  = "${each.value.username}@pam"
+
+  comment  = "SSH user for ${each.value.team}"
+
+  password = each.value.password
+  depends_on = [
+    null_resource.pam_users
+  ]
+}
+resource "null_resource" "pam_users" {
+
+  triggers = {
+    users = jsonencode(local.flat_users)
+  }
+
+  provisioner "local-exec" {
+    command = <<-EOF
+      ssh root@${var.proxmox_host} 'bash -s' <<'REMOTE_SCRIPT'
+
+      %{ for _, user in local.flat_users ~}
+      id "${user.username}" >/dev/null 2>&1 || useradd -m "${user.username}"
+      echo "${user.username}:${user.password}" | chpasswd
+      %{ endfor ~}
+
+      REMOTE_SCRIPT
+    EOF
+  }
+}
+
+
 
 #############################################
 # 4. ACL PERMISSIONS (The Magic Isolator)

@@ -12,7 +12,13 @@ locals {
 
         postgres = {
           hostname = "postgres"
-          ip        = 20
+          ip        = 11
+          memory    = 2048
+        }
+
+        kafka = {
+          hostname = "kafka"
+          ip        = 12
           memory    = 2048
         }
       }
@@ -25,8 +31,8 @@ locals {
           password = "inakitxurdi"
         },
         {
-          username = "maider"
-          password = "maidertxurdi"
+          username = "iker"
+          password = "ikertxurdi"
         },
         {
           username = "asier"
@@ -37,26 +43,119 @@ locals {
     talde1 = {
       subnet = "10.102.0.0/24"
       containers = {
-        controller = {
-          hostname = "gamecontroller"
-          ip        = 10
-          memory    = 1024
-        }
-
-        postgres = {
-          hostname = "postgres"
-          ip        = 20
-          memory    = 2048
-        }
+       
       }
-      users  = [{
-          username = "carol"
-          password = "password3"
+      users  = [
+        {
+          username = "d.arroyo"
+          email = "d.arroyo@ikasle.eus"
+          comment = "Danel Arroyo Lopez"
+          password = "d.arroyo_txurdi"
         },
         {
-          username = "dave"
-          password = "password4"
-        }]
+          username = "i.beitiarodriguez"
+          email = "i.beitiarodriguez@ikasle.eus	"
+          comment = "Ibai Beitia Rodriguez"
+          password = "i.beitiarodriguez_txurdi"
+        },
+        {
+          username = "u.callemalmierca"
+          email = "u.callemalmierca@ikasle.eus"
+          comment = "Unai Calle Malmierca"
+          password = "u.callemalmierca_txurdi"
+        },
+        {
+          username = "u.canomunoz"
+          email = "u.canomunoz@ikasle.eus"
+          comment = "Unai Caño Muñoz"
+          password = "u.canomunoz_txurdi"
+        },
+        {
+          username = "i.cortesterre"
+          email = "i.cortesterre@ikasle.eus"
+          comment = "Iker Cortés Terré"
+          password = "i.cortesterre_txurdi"
+        },
+        {
+          username = "a.diazbueno"
+          email = "a.diazbueno@ikasle.eus"
+          comment = "Andoni Díaz Bueno"
+          password = "a.diazbueno_txurdi"
+        },
+        {
+          username = "c.gabiola"
+          email = "c.gabiola@ikasle.eus"
+          comment = "Carmen Gabiola Dominguez"
+          password = "c.gabiola_txurdi"
+        },
+        {
+          username = "b.gandiaga"
+          email = "b.gandiaga@ikasle.eus"
+          comment = "Beñat Gandiaga Valenciano"
+          password = "b.gandiaga_txurdi"
+        },
+        {
+          username = "a.garciamesa"
+          email = "a.garciamesa@ikasle.eus"
+          comment = "Adrian Garcia Mesa"
+          password = "a.garciamesa_txurdi"
+        },
+        {
+          username = "m.gonzalezsantos"
+          email = "m.gonzalezsantos@ikasle.eus"
+          comment = "Miguel Gonzalez Santos"
+          password = "m.gonzalezsantos_txurdi"
+        },
+        {
+          username = "b.goni"
+          email = "b.goni@ikasle.eus"
+          comment = "Beñat Goñi Elorriaga"
+          password = "b.goni_txurdi"
+        },
+        {
+          username = "l.idirin"
+          email = "l.idirin@ikasle.eus"
+          comment = "Luken Idirin Filibi"
+          password = "l.idirin_txurdi"
+        },
+        {
+          username = "e.izagirreolivares"
+          email = "e.izagirreolivares@ikasle.eus"
+          comment = "Ekaitz Izagirre Olivares"
+          password = "e.izagirreolivares_txurdi"
+        },
+        {
+          username = "p.jimenezbenito"
+          email = "p.jimenezbenito@ikasle.eus"
+          comment = "Paula Jimenez Benito"
+          password = "p.jimenezbenito_txurdi"
+        },
+        {
+          username = "g.kortabitarte"
+          email = "g.kortabitarte@ikasle.eus"
+          comment = "Gorka Kortabitarte Gonzalez"
+          password = "g.kortabitarte_txurdi"
+        },
+        {
+          username = "ii.oviedo"
+          email = "ii.oviedo@ikasle.eus"
+          comment = "Ivan Ismael Oviedo"
+          password = "ii.oviedo_txurdi"
+        },
+        {
+          username = "joel.rodriguez"
+          email = "joel.rodriguez@ikasle.eus"
+          comment = "Joel Rodríguez González"
+          password = "joel.rodriguez_txurdi"
+        },
+        {
+          username = "o.saenzsanchez"
+          email = "o.saenzsanchez@ikasle.eus"
+          comment = "Oier Saenz Sanchez"
+          password = "o.saenzsanchez_txurdi"
+        }
+
+      ]
     }
   }
 
